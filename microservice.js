@@ -2,7 +2,7 @@ var express = require('express'),
     marqdown  = require('./marqdown.js')
 var app = express();
 
-app.post('/markdown', 
+app.get('/markdown', 
 	function(req,res)
 	{
 		// console.log(req.body.markdown);
