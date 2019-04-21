@@ -13,3 +13,4 @@ ENV APP_PORT=3001
 EXPOSE 3001
 
 WORKDIR /srv
+CMD [ "npm", "start" ]
