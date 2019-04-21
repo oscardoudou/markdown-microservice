@@ -102,8 +102,10 @@ See above to see whether containers themselves function the same as they do with
 In our case, we don’t need to specify the container name, because we only have one container inside the pod.
 [8](https://kubernetes.io/docs/tutorials/kubernetes-basics/explore/explore-interactive/)
 
-## [rolling update](https://codeburst.io/getting-started-with-kubernetes-deploy-a-docker-container-with-kubernetes-in-5-minutes-eb4be0e96370)
 ## [what is inside cluster master node respectively](https://kubernetes.io/docs/concepts/overview/components/)
+## [rolling update](https://codeburst.io/getting-started-with-kubernetes-deploy-a-docker-container-with-kubernetes-in-5-minutes-eb4be0e96370)
+This is great to make sure that all our nginx pods are not all scaled down at the same time. It also makes sure that it does not create more that 25 percent of the desired number or replicas we specified while performing the rollout. It does not kill old Pods until a sufficient number of new Pods have come up, and does not create new Pods until a sufficient number of old Pods have been killed. This is referred to as “[Rolling Update Strategy](https://www.bmc.com/blogs/kubernetes-deployment/)”. Another key benefit of using deployment.
+## [Let’s see how good the ReplicaSet is by killing a pod](https://medium.com/@snewman/kubernetes-pods-replicasets-and-deployments-edc8959f978c)
 
 ## postman
 post http://a618fcdd463fe11e9a7fd0ae0afe671d-1310534138.us-east-2.elb.amazonaws.com:8080/markdown
