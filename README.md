@@ -1,6 +1,10 @@
 infrastruture part
 =====================
-install docker on ubuntu
+## [hello minikube](https://kubernetes.io/docs/tutorials/hello-minikube/)
+get sense of what kubernetes does
+[kubectl configuraiton](https://kubernetes.io/docs/tasks/tools/install-kubectl/#verifying-kubectl-configuration) may depend on minikube, since config file wont be generate if no cluster running
+
+## install docker on ubuntu
 ```
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
@@ -14,24 +18,90 @@ docker run hello-world
 groups(need root to reflect the new group)
 docker info
 ```
+> get dockerlized app working on [directly connected container](https://docs.aws.amazon.com/AmazonECR/latest/userguide/docker-basics.html)
+## manually configuration
 
-<<<<<<< Updated upstream
-1. manually configuration:docker install[[1]](https://docs.docker.com/install/linux/docker-ce/ubuntu/) and use without root[[2]](https://docs.docker.com/install/linux/linux-postinstall/) on 16.04 for microservice(need create ansible script for this)
-2. containerlize microservice and hit the route inside container(expose docker container port correctly [[3]](https://stackoverflow.com/questions/33379393/docker-env-vs-run-export)
-3. build the image, run container and test external incoming traffic(change security group would be needed on instance)
+docker install[[1]](https://docs.docker.com/install/linux/docker-ce/ubuntu/) and use without root[[2]](https://docs.docker.com/install/linux/linux-postinstall/) on 16.04 for microservice(need create ansible script for this)
+## containerlize microservice
+[chaos workshop](https://github.com/CSC-DevOps/Chaos#setup)
+
+object: hit the route inside container(expose docker container port correctly [[3]](https://stackoverflow.com/questions/33379393/docker-env-vs-run-export)
+[move node microservice.js inside dockerfile](https://nodejs.org/de/docs/guides/nodejs-docker-webapp/#creating-a-dockerfile)
+## build the image
+
+run container and test external incoming traffic(change security group would be needed on instance)
 [[4]](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-network-security.html) 
 
-hit [the link] to test a simple service(need replace with actual markdown preview) running in container on a instance(http://ec2-18-223-124-12.us-east-2.compute.amazonaws.com:3001/markdown)
+hit [the link] to test a simple service(need replace with actual markdown preview) 
 
-#### ToDo
+running in container on a instance(http://ec2-18-223-124-12.us-east-2.compute.amazonaws.com:3001/markdown)
 
-4. create ecr repo first(aws cli config) 
-[[5]](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html#cli-quick-configuration) then register the created image[[6]](https://docs.aws.amazon.com/AmazonECR/latest/userguide/docker-basics.html)
-5. create deployment for a pod with 3 instances[[7]](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/)(or something other object which specify the service availability) by refering the registered image
-6. expose pod as kubernetes service ?
+## create ecr repo first(aws cli config) and [pull and push](https://kubernetes.io/docs/concepts/containers/images/#using-aws-ec2-container-registry) 
 
+[remember authenticate docker login every 12 hours](https://docs.aws.amazon.com/AmazonECR/latest/userguide/ECR_AWSCLI.html#AWSCLI_get-login)
+[[5]](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html#cli-quick-configuration) then register the created image[[6]](https://docs.aws.amazon.com/AmazonECR/latest/userguide/docker-basics.html) 
 
+> demo it on ec2
+  
+## [create cluster on ec2](https://github.com/kubernetes/kops/blob/master/docs/aws.md)
+ * make sure kops kubectl [awscli](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html#install-tool-pip) installed
+    [use pip install awscli rather than apt](https://docs.aws.amazon.com/cli/latest/userguide/install-linux.html)
+ * [Create an SSH key](https://github.com/nathanpeck/nodejs-aws-workshop/tree/master/6%20-%20Kubernetes%20(kops)#4-create-an-ssh-key)
+    ```
+    ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+    ```
+ * create cluster state storage 
+   ```
+   aws s3api create-bucket \
+    --bucket checkbox-state-store \
+    --region us-east-2
+   ```
+   use ```aws s3 ls``` if forget
+ * set env
+   ```
+    export NAME=checkbox.k8s.local
+    export KOPS_STATE_STORE=s3://checkbox-state-store
+   ```
+ * config availbility zone
+    [just region not need 2a, 2b, 2c](https://docs.aws.amazon.com/general/latest/gr/rande.html)
+    ```
+    aws ec2 describe-availability-zones --region us-east-2
+    ```
+ * creat cluster
+     ```
+     kops create cluster \
+        --zones us-east-2 \
+        ${NAME}
+     ```  
+     above just generate a cluster configuration, real build happen after confirm
+ * validate
+    ```
+    kubectl get nodes
+    kops validate cluster
+    ```
+    make sure wait until they are all ready
+    
+    
+## [create deployment object with 3 replicas](https://kubernetes.io/docs/tutorials/stateless-application/expose-external-ip-address/)
+  
+[[7]](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/)(or something other object which specify the service availability) by refering the registered image
+## [expose pod as kubernetes service and specify the target port](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#expose)
 
+## troubleshooting
+```
+kubectl get pods
+kubectl describe pods
+```
+see pods ready(availbale) status and further event detail(image pull or crashloopbackoff).
+```
+kubectl logs $POD_NAME
+kubectl exec -ti $POD_NAME bash
+curl -X POST -F 'key=value' localhost:3001/markdown 
+```
+See above to see whether containers themselves function the same as they do without pods node.
+In our case, we don’t need to specify the container name, because we only have one container inside the pod.
+[8](https://kubernetes.io/docs/tutorials/kubernetes-basics/explore/explore-interactive/)
 
-
+## [rolling update](https://codeburst.io/getting-started-with-kubernetes-deploy-a-docker-container-with-kubernetes-in-5-minutes-eb4be0e96370)
+## [what is inside cluster master node respectively](https://kubernetes.io/docs/concepts/overview/components/)
 
