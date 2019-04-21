@@ -105,3 +105,32 @@ In our case, we don’t need to specify the container name, because we only have
 ## [rolling update](https://codeburst.io/getting-started-with-kubernetes-deploy-a-docker-container-with-kubernetes-in-5-minutes-eb4be0e96370)
 ## [what is inside cluster master node respectively](https://kubernetes.io/docs/concepts/overview/components/)
 
+## postman
+post http://a618fcdd463fe11e9a7fd0ae0afe671d-1310534138.us-east-2.elb.amazonaws.com:8080/markdown
+select body and put form data with key = markdown, value = 
+```
+{NumberQuestions:true}
+-----------
+Start with header for global options:
+{NumberQuestions:true}
+-----------
+Start with header for global options:
+{NumberQuestions:true}
+-----------
+```
+you will see the markdown
+
+## replace [server.js](https://github.com/chrisparnin/checkbox.io/blob/master/server-side/site/server.js#L28) as follow in checkbox
+
+require got
+```
+app.post('/api/design/survey', 
+	function(req,res)
+	{
+		console.log(req.body.markdown);
+		//var text = marqdown.render( req.query.markdown );
+		var text = got.put('{url of microservice}/markdown');
+		res.send( {preview: text} );
+	}
+);
+```
