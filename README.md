@@ -107,6 +107,14 @@ In our case, we don’t need to specify the container name, because we only have
 This is great to make sure that all our nginx pods are not all scaled down at the same time. It also makes sure that it does not create more that 25 percent of the desired number or replicas we specified while performing the rollout. It does not kill old Pods until a sufficient number of new Pods have come up, and does not create new Pods until a sufficient number of old Pods have been killed. This is referred to as “[Rolling Update Strategy](https://www.bmc.com/blogs/kubernetes-deployment/)”. Another key benefit of using deployment.
 ## [Let’s see how good the ReplicaSet is by killing a pod](https://medium.com/@snewman/kubernetes-pods-replicasets-and-deployments-edc8959f978c)
 
+## reboot node
+ 
+Pod down(equivalent to container down in our case, since only one container per pod) : you can see one pod's age is actually 38mins, which is because `kubectl delete pod/POD_NAME`. Then kubernetes create another pod and schedules it to one of our two nodes.
+
+Node down(by reboot instance on aws console): one of the nodes status temporarily become NotReady and 3 pods reside on that node restart but not actually reborn that is why AGE stay the same. After about a min, kubernetes recover those 3 pods on that node. 
+
+During node's down period. Postman response seems take a bit longer than before
+
 ## postman
 post http://a618fcdd463fe11e9a7fd0ae0afe671d-1310534138.us-east-2.elb.amazonaws.com:8080/markdown
 select body and put form data with key = markdown, value = 
