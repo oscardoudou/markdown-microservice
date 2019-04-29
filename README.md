@@ -1,10 +1,10 @@
 infrastruture part
 =====================
-## [hello minikube](https://kubernetes.io/docs/tutorials/hello-minikube/)
-get sense of what kubernetes does
-[kubectl configuraiton](https://kubernetes.io/docs/tasks/tools/install-kubectl/#verifying-kubectl-configuration) may depend on minikube, since config file wont be generate if no cluster running
+## What kubernetes does
+[hello minikube](https://kubernetes.io/docs/tutorials/hello-minikube/)
 
-## install docker on ubuntu
+## Install
+### docker
 ```
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
@@ -18,16 +18,26 @@ docker run hello-world
 groups(need root to reflect the new group)
 docker info
 ```
-> get dockerlized app working on [directly connected container](https://docs.aws.amazon.com/AmazonECR/latest/userguide/docker-basics.html)
-## manually configuration
+[docker install](https://docs.docker.com/install/linux/docker-ce/ubuntu/) and [use without root](https://docs.docker.com/install/linux/linux-postinstall/) on 16.04 for microservice(need create ansible script for this)
+### aws-cli
+* ECR
+* S3
+* auth docker login 
+### kops 
+> manage cluster 
+### kubectl 
+> manage deployment strategy on cluster
 
-docker install[[1]](https://docs.docker.com/install/linux/docker-ce/ubuntu/) and use without root[[2]](https://docs.docker.com/install/linux/linux-postinstall/) on 16.04 for microservice(need create ansible script for this)
-## containerlize microservice
+[kubectl configuraiton](https://kubernetes.io/docs/tasks/tools/install-kubectl/#verifying-kubectl-configuration) may depend on minikube, since config file wont be generate if no cluster running. So `kubectl cluster-info` won't give expect info until cluster has been created
+
+## Containerlize as Microservice
+### dockerlize app(node)
+get dockerlized app working on [directly connected container](https://docs.aws.amazon.com/AmazonECR/latest/userguide/docker-basics.html)
 [chaos workshop](https://github.com/CSC-DevOps/Chaos#setup)
-
 object: hit the route inside container(expose docker container port correctly [[3]](https://stackoverflow.com/questions/33379393/docker-env-vs-run-export)
 [move node microservice.js inside dockerfile](https://nodejs.org/de/docs/guides/nodejs-docker-webapp/#creating-a-dockerfile)
-## build the image
+
+### build the image
 
 run container and test external incoming traffic(change security group would be needed on instance)
 [[4]](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-network-security.html) 
@@ -36,14 +46,14 @@ hit [the link] to test a simple service(need replace with actual markdown previe
 
 running in container on a instance(http://ec2-18-223-124-12.us-east-2.compute.amazonaws.com:3001/markdown)
 
-## create ecr repo first(aws cli config) and [pull and push](https://kubernetes.io/docs/concepts/containers/images/#using-aws-ec2-container-registry) 
+### create ecr repo first(aws cli config) and [pull and push](https://kubernetes.io/docs/concepts/containers/images/#using-aws-ec2-container-registry) 
 
 [remember authenticate docker login every 12 hours](https://docs.aws.amazon.com/AmazonECR/latest/userguide/ECR_AWSCLI.html#AWSCLI_get-login)
 [[5]](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html#cli-quick-configuration) then register the created image[[6]](https://docs.aws.amazon.com/AmazonECR/latest/userguide/docker-basics.html) 
 
 > demo it on ec2
   
-## [create cluster on ec2](https://github.com/kubernetes/kops/blob/master/docs/aws.md)
+### [create cluster on ec2](https://github.com/kubernetes/kops/blob/master/docs/aws.md)
  * make sure kops kubectl [awscli](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html#install-tool-pip) installed
     [use pip install awscli rather than apt](https://docs.aws.amazon.com/cli/latest/userguide/install-linux.html)
  * [Create an SSH key](https://github.com/nathanpeck/nodejs-aws-workshop/tree/master/6%20-%20Kubernetes%20(kops)#4-create-an-ssh-key)
@@ -82,12 +92,26 @@ running in container on a instance(http://ec2-18-223-124-12.us-east-2.compute.am
     make sure wait until they are all ready
     
     
-## [create deployment object with 3 replicas](https://kubernetes.io/docs/tutorials/stateless-application/expose-external-ip-address/)
+### [create deployment object with 3 replicas](https://kubernetes.io/docs/tutorials/stateless-application/expose-external-ip-address/)
   
 [[7]](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/)(or something other object which specify the service availability) by refering the registered image
-## [expose pod as kubernetes service and specify the target port](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#expose)
+### [expose pod as kubernetes service and specify the target port](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#expose)
 
-## troubleshooting
+
+## Demo service availability
+> Postman needed to send post request
+* delete pods
+`kubectl delete pods POD_NAME` pods age change
+Pod down(equivalent to container down in our case, since only one container per pod) : you can see one pod's age is actually 38mins, which is because `kubectl delete pod/POD_NAME`. Then kubernetes create another pod and schedules it to one of our two nodes.
+service available and no significant delay
+* stop instance
+Stop EC2 instance in AWS console.
+Pods whom belongs to this node disappear, equivalent number pods created and schedule to new node when possible
+service available and should expect some delay
+Node down(by reboot instance on aws console): one of the nodes status temporarily become NotReady and 3 pods reside on that node restart but not actually reborn that is why AGE stay the same. After about a min, kubernetes recover those 3 pods on that node. 
+
+During node's down period. Postman response seems take a bit longer than before
+## Troubleshooting
 ```
 kubectl get pods
 kubectl describe pods
@@ -102,18 +126,12 @@ See above to see whether containers themselves function the same as they do with
 In our case, we don’t need to specify the container name, because we only have one container inside the pod.
 [8](https://kubernetes.io/docs/tutorials/kubernetes-basics/explore/explore-interactive/)
 
+## Nice reference
 ## [what is inside cluster master node respectively](https://kubernetes.io/docs/concepts/overview/components/)
 ## [rolling update](https://codeburst.io/getting-started-with-kubernetes-deploy-a-docker-container-with-kubernetes-in-5-minutes-eb4be0e96370)
 This is great to make sure that all our nginx pods are not all scaled down at the same time. It also makes sure that it does not create more that 25 percent of the desired number or replicas we specified while performing the rollout. It does not kill old Pods until a sufficient number of new Pods have come up, and does not create new Pods until a sufficient number of old Pods have been killed. This is referred to as “[Rolling Update Strategy](https://www.bmc.com/blogs/kubernetes-deployment/)”. Another key benefit of using deployment.
 ## [Let’s see how good the ReplicaSet is by killing a pod](https://medium.com/@snewman/kubernetes-pods-replicasets-and-deployments-edc8959f978c)
-
-## reboot node
  
-Pod down(equivalent to container down in our case, since only one container per pod) : you can see one pod's age is actually 38mins, which is because `kubectl delete pod/POD_NAME`. Then kubernetes create another pod and schedules it to one of our two nodes.
-
-Node down(by reboot instance on aws console): one of the nodes status temporarily become NotReady and 3 pods reside on that node restart but not actually reborn that is why AGE stay the same. After about a min, kubernetes recover those 3 pods on that node. 
-
-During node's down period. Postman response seems take a bit longer than before
 
 ## postman
 post http://a618fcdd463fe11e9a7fd0ae0afe671d-1310534138.us-east-2.elb.amazonaws.com:8080/markdown
